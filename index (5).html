@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#c8102e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="DE Jr Collision"/>
+<link rel="manifest" href="manifest.json"/>
+<title>DE Jr Collision — Quote Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--primary:#c8102e;--primary-dark:#9e0b22;--primary-light:#f5e6e9;--bg:#f4f5f7;--surface:#fff;--surface2:#f9f9fb;--border:#e2e4e9;--text:#1a1a2e;--text-muted:#6b7280;--success:#10b981;--success-bg:#ecfdf5;--warning:#f59e0b;--warning-bg:#fffbeb;--danger:#ef4444;--danger-bg:#fef2f2;--info:#3b82f6;--info-bg:#eff6ff;--radius:10px;--radius-lg:14px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
+#app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:var(--primary);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:10px}
+.header-title{font-size:17px;font-weight:700}
+.header-sub{font-size:11px;opacity:.8}
+.back-btn{background:none;border:none;color:#fff;font-size:26px;cursor:pointer;padding:2px 6px;line-height:1}
+.content{flex:1;padding:16px;max-width:500px;margin:0 auto;width:100%;padding-bottom:80px}
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;position:fixed;bottom:0;left:0;right:0;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;gap:3px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:11px;font-weight:500;position:relative}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:22px;height:22px}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--primary);color:#fff;border-radius:10px;font-size:10px;font-weight:700;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:15px;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.field textarea{resize:vertical;min-height:70px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active{background:var(--primary-dark)}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-info{background:var(--info);color:#fff}
+.btn-sm{padding:7px 12px;font-size:13px}
+.btn-full{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-pending{background:var(--warning-bg);color:#92400e}
+.badge-approved{background:var(--success-bg);color:#065f46}
+.badge-accepted{background:var(--info-bg);color:#1e40af}
+.badge-completed{background:#f3f4f6;color:#374151}
+.badge-denied{background:var(--danger-bg);color:#991b1b}
+.quote-item{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow)}
+.quote-item:active{background:var(--bg)}
+.quote-item-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.quote-customer{font-weight:700;font-size:15px}
+.quote-meta{font-size:13px;color:var(--text-muted);margin-top:3px}
+.quote-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.quote-price{font-size:17px;font-weight:800;color:var(--primary)}
+.matrix-table{width:100%;border-collapse:collapse;font-size:13px}
+.matrix-table th{background:var(--bg);padding:8px 4px;text-align:center;font-weight:600;color:var(--text-muted);font-size:11px;border:1px solid var(--border)}
+.matrix-table td{padding:8px 4px;text-align:center;border:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:13px}
+.matrix-table td:hover{background:var(--primary-light)}
+.matrix-table td.selected{background:var(--primary);color:#fff;font-weight:700}
+.matrix-table td:first-child{font-weight:500;color:var(--text-muted);background:var(--bg);cursor:default;font-size:11px}
+.repair-type-btn{padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;text-align:center;font-size:13px;font-weight:500;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.repair-type-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.line-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.line-item:last-child{border-bottom:none}
+.line-item-name{font-size:14px;font-weight:600;flex:1}
+.line-item-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
+.line-item-price{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap}
+.line-item-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:22px;padding:0 0 0 10px;line-height:1}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.photo-thumb{aspect-ratio:1;border-radius:var(--radius);overflow:hidden;position:relative}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .remove-photo{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-add{aspect-ratio:1;border-radius:var(--radius);border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:var(--surface2);color:var(--text-muted);font-size:12px;gap:4px}
+.notif-banner{background:var(--warning-bg);border:1px solid #fcd34d;border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+.notif-text{font-size:13px;color:#78350f;line-height:1.4}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0 0;border-top:2px solid var(--text);margin-top:8px}
+.total-label{font-size:16px;font-weight:700}
+.total-price{font-size:24px;font-weight:800;color:var(--primary)}
+.override-row{display:flex;align-items:center;gap:8px;margin-top:10px;background:var(--bg);border-radius:var(--radius);padding:10px}
+.override-row span{font-size:13px;color:var(--text-muted);white-space:nowrap}
+.override-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;background:var(--surface)}
+.tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:3px;margin-bottom:16px;overflow-x:auto;gap:3px}
+.tab{flex:none;padding:8px 14px;text-align:center;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:all .15s;color:var(--text-muted);border:none;background:none;white-space:nowrap}
+.tab.active{background:var(--primary);color:#fff}
+.report-table{width:100%;border-collapse:collapse;font-size:13px}
+.report-table th{background:var(--bg);padding:9px 10px;text-align:left;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border)}
+.report-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.report-table tr:last-child td{border-bottom:none}
+.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--primary)}
+.login-logo{width:72px;height:72px;background:#fff;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.login-logo svg{width:40px;height:40px;color:var(--primary)}
+.login-title{color:#fff;font-size:22px;font-weight:800;margin-bottom:2px;text-align:center}
+.login-sub{color:rgba(255,255,255,.75);font-size:13px;margin-bottom:28px;text-align:center}
+.login-card{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:380px}
+.error-msg{background:var(--danger-bg);color:#991b1b;border-radius:var(--radius);padding:10px 12px;font-size:13px;margin-bottom:12px}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text-muted)}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.35}
+.empty-state p{font-size:14px}
+.detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--text-muted)}
+.detail-value{font-weight:500;text-align:right;max-width:65%}
+.flex-row{display:flex;gap:8px}
+.flex-1{flex:1}
+.mt-8{margin-top:8px}
+.mt-12{margin-top:12px}
+.mb-0{margin-bottom:0}
+.hidden{display:none!important}
+.vehicle-diagram{display:flex;flex-direction:column;align-items:center;margin:12px 0}
+.vehicle-svg{width:100%;max-width:340px;cursor:pointer}
+.panel-btn{cursor:pointer;transition:fill .15s}
+.panel-btn:hover{fill:#fca5a5}
+.panel-btn.selected{fill:var(--primary)}
+.panel-label{font-size:9px;font-weight:600;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:middle}
+.panel-label-dark{font-size:9px;font-weight:600;fill:#1a1a2e;pointer-events:none;text-anchor:middle;dominant-baseline:middle}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.panel-select-btn{padding:9px 8px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.panel-select-btn.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.step{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.step-num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-num.active{background:var(--primary);color:#fff}
+.step-num.done{background:var(--success);color:#fff}
+.step-num.inactive{background:var(--border);color:var(--text-muted)}
+.step-label{font-size:12px;font-weight:500;color:var(--text-muted)}
+.step-label.active{color:var(--primary);font-weight:700}
+.step-divider{width:20px;height:1px;background:var(--border);flex-shrink:0}
+.toast{position:fixed;top:0;left:0;right:0;z-index:9999;padding:14px 16px;text-align:center;font-size:14px;font-weight:600;color:#fff}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const SHOP = { name: 'Dale Earnhardt Jr. Collision Center', phone: '', email: '' };
+
+const PDR_SIZES = ['Dime','Quarter','Half Dollar','Dollar','Hand Size','Larger'];
+const PDR_SEVERITY = ['Shallow','Medium','Deep'];
+const PDR_MATRIX = [
+  [65,95,130],[95,130,175],[130,175,225],[175,225,295],[225,295,395],[295,395,495]
+];
+
+const RIM_REPAIRS = [
+  {label:'Scuff / Curb Rash',price:125},
+  {label:'Deep Scratch',price:175},
+  {label:'Minor Bend',price:195},
+  {label:'Moderate Bend',price:275},
+];
+
+const BUMPER_REPAIRS = [
+  {label:'Minor Scuff',price:150},
+  {label:'Deep Scratch',price:225},
+  {label:'Small Crack',price:295},
+  {label:'Large Crack / Major Damage',price:425},
+];
+
+const STANDARD_PANELS = [
+  'Hood','Roof','Trunk / Tailgate','Front Bumper','Rear Bumper',
+  'Left Front Door','Right Front Door','Left Rear Door','Right Rear Door',
+  'Left Front Fender','Right Front Fender','Left Quarter Panel','Right Quarter Panel',
+  'Left Rocker','Right Rocker'
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let S = {
+  user: null,
+  screen: 'login',
+  quotes: JSON.parse(localStorage.getItem('pdr_quotes')||'[]'),
+  users: JSON.parse(localStorage.getItem('pdr_users')||JSON.stringify([
+    {id:'1',username:'admin',password:'admin123',name:'Admin',role:'admin'},
+    {id:'2',username:'advisor1',password:'pass123',name:'Alex Johnson',role:'advisor'},
+    {id:'3',username:'tech1',password:'pass123',name:'Mike Torres',role:'tech'},
+  ])),
+  activeTab:'all',
+  currentQuote:null,
+  prevScreen:'dashboard',
+  newQuote:null,
+  reportFilter:'30',
+  toast:null,
+  newQuoteStep:1,
+};
+
+function save(){
+  localStorage.setItem('pdr_quotes',JSON.stringify(S.quotes));
+  localStorage.setItem('pdr_users',JSON.stringify(S.users));
+}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):''}
+function fmtDate(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function fmtMoney(n){return'$'+Number(n).toFixed(2)}
+
+function toast(msg,type='success'){
+  S.toast={msg,type};render();
+  setTimeout(()=>{S.toast=null;render();},3000);
+}
+
+function go(screen,data={}){
+  S.screen=screen;
+  Object.assign(S,data);
+  window.scrollTo(0,0);
+  render();
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render(){
+  const app=document.getElementById('app');
+  if(!S.user){app.innerHTML=renderLogin();bindEvents();return;}
+  app.innerHTML=`
+    ${S.toast?`<div class="toast" style="background:${S.toast.type==='error'?'var(--danger)':S.toast.type==='warning'?'var(--warning)':'var(--success)'}">${S.toast.msg}</div>`:''}
+    ${renderHeader()}
+    <div class="content">${renderScreen()}</div>
+    ${renderNav()}
+  `;
+  bindEvents();
+}
+
+function renderHeader(){
+  const titles={dashboard:'Quotes',new_quote:'New Quote',quote_detail:'Quote Detail',tech_queue:'Tech Queue',reports:'Reports',admin:'Admin'};
+  const showBack=['new_quote','quote_detail'].includes(S.screen);
+  const backTo=S.screen==='quote_detail'?S.prevScreen:'dashboard';
+  return`<div class="header">
+    <div class="header-left">
+      ${showBack?`<button class="back-btn" onclick="go('${backTo}')">&lsaquo;</button>`:''}
+      <div>
+        <div class="header-title">${titles[S.screen]||'DE Jr Collision'}</div>
+        <div class="header-sub">DE Jr Collision &bull; ${S.user.name}</div>
+      </div>
+    </div>
+    <button onclick="logout()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;">Logout</button>
+  </div>`;
+}
+
+function renderNav(){
+  const role=S.user.role;
+  const pending=S.quotes.filter(q=>q.status==='pending').length;
+  let tabs=[];
+  if(role==='advisor'||role==='admin'){
+    tabs.push({s:'dashboard',label:'Quotes',icon:iDoc()});
+    tabs.push({s:'new_quote',label:'New Quote',icon:iPlus()});
+  }
+  if(role==='tech'||role==='admin'){
+    tabs.push({s:'tech_queue',label:'Queue',icon:iWrench(),badge:pending||0});
+  }
+  tabs.push({s:'reports',label:'Reports',icon:iChart()});
+  if(role==='admin') tabs.push({s:'admin',label:'Admin',icon:iSettings()});
+  return`<div class="bottom-nav">${tabs.map(t=>`
+    <button class="nav-item ${S.screen===t.s?'active':''}" onclick="go('${t.s}')">
+      ${t.icon}
+      ${t.badge?`<span class="nav-badge">${t.badge}</span>`:''}
+      ${t.label}
+    </button>`).join('')}</div>`;
+}
+
+function renderScreen(){
+  switch(S.screen){
+    case'dashboard':return renderDashboard();
+    case'new_quote':return renderNewQuote();
+    case'quote_detail':return renderQuoteDetail();
+    case'tech_queue':return renderTechQueue();
+    case'reports':return renderReports();
+    case'admin':return renderAdmin();
+    default:return renderDashboard();
+  }
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+function renderLogin(){return`
+  <div class="login-screen">
+    <div class="login-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2z"/><path d="M12 17v4m-4 0h8"/></svg></div>
+    <div class="login-title">DE Jr Collision</div>
+    <div class="login-sub">PDR &amp; Repair Quote Tool</div>
+    <div class="login-card">
+      <div id="login-err"></div>
+      <div class="field"><label>Username</label><input type="text" id="lu" autocapitalize="none" placeholder="Username"/></div>
+      <div class="field"><label>Password</label><input type="password" id="lp" placeholder="Password"/></div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+      <p style="text-align:center;margin-top:12px;font-size:11px;color:#9ca3af;">admin/admin123 &bull; advisor1/pass123 &bull; tech1/pass123</p>
+    </div>
+  </div>`;}
+
+function doLogin(){
+  const u=document.getElementById('lu').value.trim().toLowerCase();
+  const p=document.getElementById('lp').value;
+  const user=S.users.find(x=>x.username.toLowerCase()===u&&x.password===p);
+  if(!user){document.getElementById('login-err').innerHTML='<div class="error-msg">Invalid username or password.</div>';return;}
+  S.user=user;go('dashboard');
+}
+function logout(){S.user=null;S.screen='login';render();}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const mine=S.user.role==='admin'?S.quotes:S.quotes.filter(q=>q.advisorId===S.user.id);
+  const statuses=['all','pending','approved','accepted','completed','denied'];
+  const filtered=S.activeTab==='all'?mine:mine.filter(q=>q.status===S.activeTab);
+  const sorted=[...filtered].sort((a,b)=>b.createdAt-a.createdAt);
+  return`
+    <div style="overflow-x:auto;margin-bottom:14px;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;gap:6px;min-width:max-content;">
+        ${statuses.map(t=>`<button class="tab ${S.activeTab===t?'active':''}" onclick="S.activeTab='${t}';render()">${cap(t)}</button>`).join('')}
+      </div>
+    </div>
+    ${sorted.length===0?`<div class="empty-state">${iDoc(48)}<p>No ${S.activeTab==='all'?'':S.activeTab+' '}quotes yet.</p>${S.user.role!=='tech'?`<button class="btn btn-primary mt-12" onclick="go('new_quote')">Create Quote</button>`:''}</div>`:sorted.map(renderQuoteCard).join('')}
+  `;}
+
+function renderQuoteCard(q){return`
+  <div class="quote-item" onclick="openQuote('${q.id}','dashboard')">
+    <div class="quote-item-header">
+      <div><div class="quote-customer">${q.customerName}</div><div class="quote-meta">${q.vehicleType} — ${q.vehicle} &bull; ${fmtDate(q.createdAt)}</div></div>
+      <span class="badge badge-${q.status}">${cap(q.status)}</span>
+    </div>
+    <div class="quote-meta">${q.lineItems.length} item${q.lineItems.length!==1?'s':''} &bull; ${q.advisorName}</div>
+    <div class="quote-footer">
+      <span style="font-size:13px;color:var(--text-muted)">${q.roNumber?'RO: '+q.roNumber:'No RO'}</span>
+      <span class="quote-price">${fmtMoney(q.total)}</span>
+    </div>
+  </div>`;}
+
+function openQuote(id,prev){
+  S.currentQuote=S.quotes.find(q=>q.id===id);
+  S.prevScreen=prev||'dashboard';
+  go('quote_detail');
+}
+
+// ============================================================
+// NEW QUOTE — MULTI STEP
+// ============================================================
+function initNewQuote(){
+  S.newQuote={
+    vehicleType:'',vehicle:'',customerName:'',advisorName:S.user.name,
+    repairType:'pdr',selectedPanel:'',customPanel:'',
+    pdrSelection:null,pdrOverride:'',
+    rimType:null,bumperType:null,otherDesc:'',otherPrice:'',
+    lineItems:[],photos:[],notes:'',
+  };
+  S.newQuoteStep=1;
+}
+
+function renderNewQuote(){
+  if(!S.newQuote) initNewQuote();
+  const q=S.newQuote;
+  const steps=['Vehicle','Repair','Items','Photos','Review'];
+  const step=S.newQuoteStep;
+
+  const stepHTML=`
+    <div class="step-indicator">
+      ${steps.map((s,i)=>{
+        const n=i+1;
+        const cls=n<step?'done':n===step?'active':'inactive';
+        return`<div class="step">
+          <div class="step-num ${cls}">${n<step?'✓':n}</div>
+          <span class="step-label ${n===step?'active':''}">${s}</span>
+          ${i<steps.length-1?'<div class="step-divider"></div>':''}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  let body='';
+  if(step===1) body=renderStep1();
+  else if(step===2) body=renderStep2();
+  else if(step===3) body=renderStep3();
+  else if(step===4) body=renderStep4();
+  else if(step===5) body=renderStep5();
+
+  return stepHTML+body;
+}
+
+// STEP 1 — Vehicle info
+function renderStep1(){
+  const q=S.newQuote;
+  return`
+    <div class="card">
+      <div class="card-title">Customer &amp; Vehicle</div>
+      <div class="field"><label>Customer Name</label>
+        <input type="text" id="nq-cn" value="${q.customerName}" placeholder="Full name" oninput="S.newQuote.customerName=this.value"/>
+      </div>
+      <div class="field"><label>Advisor Name</label>
+        <input type="text" id="nq-an" value="${q.advisorName}" placeholder="Advisor name" oninput="S.newQuote.advisorName=this.value"/>
+      </div>
+      <div class="field"><label>Vehicle (Year / Make / Model / Color)</label>
+        <input type="text" id="nq-v" value="${q.vehicle}" placeholder="e.g. 2022 Toyota Camry White" oninput="S.newQuote.vehicle=this.value"/>
+      </div>
+      <div class="field mb-0"><label>Vehicle Type</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
+          ${['Car','SUV','Truck'].map(t=>`
+            <button class="repair-type-btn ${q.vehicleType===t?'active':''}" onclick="S.newQuote.vehicleType='${t}';render()">${t}</button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="nextStep1()">Next — Select Repair &rarr;</button>
+  `;}
+
+function nextStep1(){
+  const q=S.newQuote;
+  q.customerName=document.getElementById('nq-cn')?.value?.trim()||q.customerName;
+  q.vehicle=document.getElementById('nq-v')?.value?.trim()||q.vehicle;
+  q.advisorName=document.getElementById('nq-an')?.value?.trim()||q.advisorName;
+  if(!q.customerName){toast('Enter customer name.','error');return;}
+  if(!q.vehicle){toast('Enter vehicle info.','error');return;}
+  if(!q.vehicleType){toast('Select vehicle type.','error');return;}
+  S.newQuoteStep=2;render();
+}
+
+// STEP 2 — Repair type + panel + matrix
+function renderStep2(){
+  const q=S.newQuote;
+  return`
+    <div class="card">
+      <div class="card-title">Repair Type</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        ${[['pdr','PDR'],['rim','Rim Repair'],['bumper','Bumper Repair'],['other','Other']].map(([v,l])=>`
+          <button class="repair-type-btn ${q.repairType===v?'active':''}" onclick="S.newQuote.repairType='${v}';S.newQuote.pdrSelection=null;S.newQuote.rimType=null;S.newQuote.bumperType=null;S.newQuote.pdrOverride='';render()">${l}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    ${q.repairType==='pdr'?renderPDRStep():''}
+    ${q.repairType==='rim'?renderRimStep():''}
+    ${q.repairType==='bumper'?renderBumperStep():''}
+    ${q.repairType==='other'?renderOtherStep():''}
+
+    <button class="btn btn-success btn-full mt-8" onclick="addItem()">+ Add to Quote</button>
+
+    ${q.lineItems.length>0?`
+      <div class="card mt-12">
+        <div class="card-title">Items Added (${q.lineItems.length})</div>
+        ${q.lineItems.map((item,i)=>`
+          <div class="line-item">
+            <div><div class="line-item-name">${item.name}</div><div class="line-item-detail">${item.detail}</div></div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="line-item-price">${fmtMoney(item.price)}</span>
+              <button class="line-item-remove" onclick="S.newQuote.lineItems.splice(${i},1);render()">×</button>
+            </div>
+          </div>`).join('')}
+        <div class="total-row"><span class="total-label">Total</span><span class="total-price">${fmtMoney(q.lineItems.reduce((s,i)=>s+i.price,0))}</span></div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="S.newQuoteStep=3;render()">Next — Photos &amp; Notes &rarr;</button>
+    `:''}
+  `;}
+
+function renderPDRStep(){
+  const q=S.newQuote;
+  const panelsByType={
+    Car:['Front Bumper','Hood','Roof','Trunk / Tailgate','Rear Bumper','Left Front Fender','Right Front Fender','Left Front Door','Right Front Door','Left Rear Door','Right Rear Door','Left Quarter Panel','Right Quarter Panel','Left Rocker','Right Rocker'],
+    SUV:['Front Bumper','Hood','Roof','Trunk / Tailgate','Rear Bumper','Left Front Fender','Right Front Fender','Left Front Door','Right Front Door','Left Rear Door','Right Rear Door','Left Quarter Panel','Right Quarter Panel','Left Rocker','Right Rocker'],
+    Truck:['Front Bumper','Hood','Roof','Trunk / Tailgate','Rear Bumper','Left Front Fender','Right Front Fender','Left Front Door','Right Front Door','Left Quarter Panel','Right Quarter Panel','Left Rocker','Right Rocker'],
+  };
+  const panels=panelsByType[q.vehicleType]||panelsByType['Car'];
+  const sel=q.selectedPanel;
+  return`
+    <div class="card">
+      <div class="card-title">Select Panel — ${q.vehicleType}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px;">
+        ${panels.map(p=>`<button style="padding:10px 4px;border:2px solid ${sel===p?'var(--primary)':'var(--border)'};border-radius:var(--radius);background:${sel===p?'var(--primary)':'var(--surface)'};color:${sel===p?'#fff':'var(--text)'};font-size:12px;font-weight:600;cursor:pointer;line-height:1.3;text-align:center;" onclick="selectPanel(this.dataset.p)" data-p="${p}">${p}</button>`).join('')}
+        <button style="padding:10px 4px;border:2px dashed ${sel==='Custom Panel...'?'var(--primary)':'var(--border)'};border-radius:var(--radius);background:${sel==='Custom Panel...'?'var(--primary-light)':'var(--surface2)'};color:${sel==='Custom Panel...'?'var(--primary)':'var(--text-muted)'};font-size:12px;font-weight:600;cursor:pointer;line-height:1.3;text-align:center;" onclick="selectPanel('Custom Panel...')">+ Custom</button>
+      </div>
+      ${sel==='Custom Panel...'?`<div class="field mb-0"><label>Custom Panel Name</label><input type="text" id="custom-panel" value="${q.customPanel}" placeholder="e.g. Sunroof, A-Pillar..." oninput="S.newQuote.customPanel=this.value"/></div>`:''}
+      ${sel?`<div style="margin-top:10px;padding:8px 12px;background:var(--success-bg);border-radius:var(--radius);font-size:13px;font-weight:600;color:#065f46;">✓ Selected: ${sel==='Custom Panel...'?(q.customPanel||'Custom Panel'):sel}</div>`:''}
+    </div>
+    ${sel?`
+    <div class="card">
+      <div class="card-title">Dent Size &amp; Severity — ${sel==='Custom Panel...'?(q.customPanel||'Custom'):sel}</div>
+      <div style="overflow-x:auto;">
+        <table class="matrix-table">
+          <thead><tr><th>Size</th>${PDR_SEVERITY.map(s=>`<th>${s}</th>`).join('')}</tr></thead>
+          <tbody>${PDR_SIZES.map((sz,si)=>`<tr><td>${sz}</td>${PDR_MATRIX[si].map((price,pi)=>`
+            <td class="${q.pdrSelection&&q.pdrSelection.si===si&&q.pdrSelection.pi===pi?'selected':''}" onclick="S.newQuote.pdrSelection={si:${si},pi:${pi}};S.newQuote.pdrOverride='';render()">${fmtMoney(price)}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${q.pdrSelection!==null?`<div class="override-row"><span>Override price:</span><input type="number" placeholder="${fmtMoney(PDR_MATRIX[q.pdrSelection.si][q.pdrSelection.pi])}" value="${q.pdrOverride}" oninput="S.newQuote.pdrOverride=this.value"/></div>`:''}</div>`:''}`;}
+
+function selectPanel(p){
+  S.newQuote.selectedPanel=p;
+  if(p!=='Custom Panel...') S.newQuote.customPanel='';
+  S.newQuote.pdrSelection=null;
+  S.newQuote.pdrOverride='';
+  render();
+}
+
+function renderRimStep(){
+  const q=S.newQuote;
+  return`<div class="card">
+    <div class="card-title">Rim Repair Type</div>
+    ${RIM_REPAIRS.map((r,i)=>`
+      <div class="repair-type-btn ${q.rimType===i?'active':''}" style="margin-bottom:7px;display:flex;justify-content:space-between;" onclick="S.newQuote.rimType=${i};S.newQuote.pdrOverride='';render()">
+        <span>${r.label}</span><span>${fmtMoney(r.price)}</span>
+      </div>`).join('')}
+    ${q.rimType!==null?`<div class="override-row"><span>Override:</span><input type="number" placeholder="${fmtMoney(RIM_REPAIRS[q.rimType].price)}" value="${q.pdrOverride}" oninput="S.newQuote.pdrOverride=this.value"/></div>`:''}
+  </div>`;}
+
+function renderBumperStep(){
+  const q=S.newQuote;
+  return`<div class="card">
+    <div class="card-title">Bumper Damage Type</div>
+    ${BUMPER_REPAIRS.map((r,i)=>`
+      <div class="repair-type-btn ${q.bumperType===i?'active':''}" style="margin-bottom:7px;display:flex;justify-content:space-between;" onclick="S.newQuote.bumperType=${i};S.newQuote.pdrOverride='';render()">
+        <span>${r.label}</span><span>${fmtMoney(r.price)}</span>
+      </div>`).join('')}
+    ${q.bumperType!==null?`<div class="override-row"><span>Override:</span><input type="number" placeholder="${fmtMoney(BUMPER_REPAIRS[q.bumperType].price)}" value="${q.pdrOverride}" oninput="S.newQuote.pdrOverride=this.value"/></div>`:''}
+  </div>`;}
+
+function renderOtherStep(){
+  const q=S.newQuote;
+  return`<div class="card">
+    <div class="card-title">Custom Repair</div>
+    <div class="field"><label>Description</label><input type="text" id="o-desc" value="${q.otherDesc}" placeholder="Describe repair..." oninput="S.newQuote.otherDesc=this.value"/></div>
+    <div class="field mb-0"><label>Price</label><input type="number" id="o-price" value="${q.otherPrice}" placeholder="0.00" oninput="S.newQuote.otherPrice=this.value"/></div>
+  </div>`;}
+
+function addItem(){
+  const q=S.newQuote;
+  let name,detail,price;
+  if(q.repairType==='pdr'){
+    if(!q.selectedPanel){toast('Select a panel first.','error');return;}
+    if(!q.pdrSelection){toast('Select dent size and severity.','error');return;}
+    const panel=q.selectedPanel==='Custom Panel...'?(q.customPanel||'Custom Panel'):q.selectedPanel;
+    const base=PDR_MATRIX[q.pdrSelection.si][q.pdrSelection.pi];
+    price=q.pdrOverride?parseFloat(q.pdrOverride):base;
+    name=`PDR — ${panel}`;
+    detail=`${PDR_SIZES[q.pdrSelection.si]} / ${PDR_SEVERITY[q.pdrSelection.pi]}${q.pdrOverride?' (override)':''}`;
+  } else if(q.repairType==='rim'){
+    if(q.rimType===null){toast('Select rim repair type.','error');return;}
+    price=q.pdrOverride?parseFloat(q.pdrOverride):RIM_REPAIRS[q.rimType].price;
+    name=`Rim Repair — ${RIM_REPAIRS[q.rimType].label}`;
+    detail=q.pdrOverride?'Price override':'Standard pricing';
+  } else if(q.repairType==='bumper'){
+    if(q.bumperType===null){toast('Select bumper damage type.','error');return;}
+    price=q.pdrOverride?parseFloat(q.pdrOverride):BUMPER_REPAIRS[q.bumperType].price;
+    name=`Bumper Repair — ${BUMPER_REPAIRS[q.bumperType].label}`;
+    detail=q.pdrOverride?'Price override':'Standard pricing';
+  } else {
+    const desc=document.getElementById('o-desc')?.value?.trim()||q.otherDesc;
+    const p=document.getElementById('o-price')?.value||q.otherPrice;
+    if(!desc||!p){toast('Enter description and price.','error');return;}
+    name=desc;detail='Custom repair';price=parseFloat(p);
+    q.otherDesc='';q.otherPrice='';
+  }
+  if(isNaN(price)||price<=0){toast('Invalid price.','error');return;}
+  q.lineItems.push({name,detail,price});
+  q.selectedPanel='';q.pdrSelection=null;q.rimType=null;q.bumperType=null;q.pdrOverride='';
+  toast('Item added!');
+}
+
+// STEP 3 — Photos & Notes
+function renderStep3(){
+  const q=S.newQuote;
+  return`
+    <div class="card">
+      <div class="card-title">Photos (up to 5)</div>
+      <div class="photo-grid" id="photo-grid">${renderPhotoGrid()}</div>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden" onchange="addPhoto(this)"/>
+    </div>
+    <div class="card">
+      <div class="card-title">Notes (Optional)</div>
+      <div class="field mb-0"><textarea placeholder="Additional notes..." oninput="S.newQuote.notes=this.value">${q.notes}</textarea></div>
+    </div>
+    <div class="flex-row">
+      <button class="btn btn-secondary" onclick="S.newQuoteStep=2;render()">&larr; Back</button>
+      <button class="btn btn-primary flex-1" onclick="S.newQuoteStep=5;render()">Review Quote &rarr;</button>
+    </div>
+  `;}
+
+function renderPhotoGrid(){
+  const q=S.newQuote;
+  let html=q.photos.map((p,i)=>`<div class="photo-thumb"><img src="${p}"/><button class="remove-photo" onclick="S.newQuote.photos.splice(${i},1);document.getElementById('photo-grid').innerHTML=renderPhotoGrid()">×</button></div>`).join('');
+  if(q.photos.length<5) html+=`<div class="photo-add" onclick="document.getElementById('photo-input').click()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16m8-8H4"/></svg><span>Add Photo</span></div>`;
+  return html;
+}
+
+function addPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{S.newQuote.photos.push(e.target.result);const g=document.getElementById('photo-grid');if(g)g.innerHTML=renderPhotoGrid();};
+  r.readAsDataURL(file);input.value='';
+}
+
+// STEP 4 unused — went to 5 directly
+// STEP 5 — Review
+function renderStep5(){
+  const q=S.newQuote;
+  const total=q.lineItems.reduce((s,i)=>s+i.price,0);
+  return`
+    <div class="card">
+      <div class="card-title">Review &amp; Submit</div>
+      <div class="detail-row"><span class="detail-label">Customer</span><span class="detail-value">${q.customerName}</span></div>
+      <div class="detail-row"><span class="detail-label">Advisor</span><span class="detail-value">${q.advisorName}</span></div>
+      <div class="detail-row"><span class="detail-label">Vehicle</span><span class="detail-value">${q.vehicleType} — ${q.vehicle}</span></div>
+      <div class="detail-row"><span class="detail-label">Photos</span><span class="detail-value">${q.photos.length} attached</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Repair Items</div>
+      ${q.lineItems.map(item=>`
+        <div class="line-item">
+          <div><div class="line-item-name">${item.name}</div><div class="line-item-detail">${item.detail}</div></div>
+          <span class="line-item-price">${fmtMoney(item.price)}</span>
+        </div>`).join('')}
+      <div class="total-row"><span class="total-label">Total</span><span class="total-price">${fmtMoney(total)}</span></div>
+    </div>
+    <div class="flex-row" style="margin-bottom:24px;">
+      <button class="btn btn-secondary" onclick="S.newQuoteStep=3;render()">&larr; Back</button>
+      <button class="btn btn-primary flex-1" onclick="submitQuote()">Submit for Tech Approval</button>
+    </div>
+  `;}
+
+function submitQuote(){
+  const q=S.newQuote;
+  if(!q.customerName||!q.vehicle||q.lineItems.length===0){toast('Missing required info.','error');return;}
+  const quote={
+    id:genId(),customerName:q.customerName,vehicle:q.vehicle,
+    vehicleType:q.vehicleType,advisorName:q.advisorName,
+    advisorId:S.user.id,notes:q.notes,lineItems:q.lineItems,
+    photos:q.photos,total:q.lineItems.reduce((s,i)=>s+i.price,0),
+    status:'pending',roNumber:'',poNumber:'',
+    createdAt:Date.now(),approvedAt:null,acceptedAt:null,completedAt:null,
+  };
+  S.quotes.unshift(quote);S.newQuote=null;save();
+  toast('Quote submitted for tech approval!');go('dashboard');
+}
+
+// ============================================================
+// QUOTE DETAIL
+// ============================================================
+function renderQuoteDetail(){
+  const q=S.currentQuote;
+  if(!q)return'<p>Quote not found.</p>';
+  const role=S.user.role;
+  const isMyQuote=q.advisorId===S.user.id||role==='admin';
+
+  return`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div>
+          <div style="font-size:19px;font-weight:800;">${q.customerName}</div>
+          <div style="font-size:13px;color:var(--text-muted);">${q.vehicleType||''} — ${q.vehicle}</div>
+        </div>
+        <span class="badge badge-${q.status}">${cap(q.status)}</span>
+      </div>
+      <div class="detail-row"><span class="detail-label">Advisor</span><span class="detail-value">${q.advisorName}</span></div>
+      <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">${fmtDate(q.createdAt)}</span></div>
+      ${q.roNumber?`<div class="detail-row"><span class="detail-label">RO Number</span><span class="detail-value" style="font-weight:700;color:var(--primary)">${q.roNumber}</span></div>`:''}
+      ${q.poNumber?`<div class="detail-row"><span class="detail-label">PO Number</span><span class="detail-value" style="font-weight:700;color:var(--primary)">${q.poNumber}</span></div>`:''}
+      ${q.approvedAt?`<div class="detail-row"><span class="detail-label">Approved</span><span class="detail-value">${fmtDate(q.approvedAt)}</span></div>`:''}
+      ${q.acceptedAt?`<div class="detail-row"><span class="detail-label">Accepted</span><span class="detail-value">${fmtDate(q.acceptedAt)}</span></div>`:''}
+      ${q.completedAt?`<div class="detail-row"><span class="detail-label">Completed</span><span class="detail-value">${fmtDate(q.completedAt)}</span></div>`:''}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Repair Items</div>
+      ${q.lineItems.map(item=>`
+        <div class="line-item">
+          <div><div class="line-item-name">${item.name}</div><div class="line-item-detail">${item.detail}</div></div>
+          <span class="line-item-price">${fmtMoney(item.price)}</span>
+        </div>`).join('')}
+      <div class="total-row"><span class="total-label">Total</span><span class="total-price">${fmtMoney(q.total)}</span></div>
+    </div>
+
+    ${q.photos&&q.photos.length>0?`
+    <div class="card">
+      <div class="card-title">Photos</div>
+      <div class="photo-grid">${q.photos.map(p=>`<div class="photo-thumb"><img src="${p}"/></div>`).join('')}</div>
+    </div>`:''}
+
+    ${q.notes?`<div class="card"><div class="card-title">Notes</div><p style="font-size:14px;line-height:1.6;">${q.notes}</p></div>`:''}
+
+    ${renderDetailActions(q,role,isMyQuote)}
+
+    ${(q.status==='accepted'||q.status==='completed')?`
+    <div class="flex-row" style="margin-bottom:24px;">
+      <button class="btn btn-outline flex-1" onclick="downloadPDF('${q.id}')">Download PDF</button>
+      <button class="btn btn-info flex-1" onclick="emailInvoice('${q.id}')">Email via Outlook</button>
+    </div>`:''}
+  `;}
+
+function renderDetailActions(q,role,isMyQuote){
+  if((role==='tech'||role==='admin')&&q.status==='pending'){
+    return`<div class="flex-row mb-0" style="margin-bottom:12px;">
+      <button class="btn btn-success flex-1" onclick="approveQuote('${q.id}')">✓ Approve</button>
+      <button class="btn btn-danger flex-1" onclick="denyQuote('${q.id}')">✗ Deny</button>
+    </div>`;}
+
+  if(isMyQuote&&q.status==='approved'){
+    return`<div class="card" style="background:var(--success-bg);border-color:#6ee7b7;">
+      <p style="font-size:13px;color:#065f46;font-weight:600;margin-bottom:12px;">✓ Approved — enter RO &amp; PO then mark accepted when customer agrees.</p>
+      <div class="field"><label>RO Number</label><input type="text" id="ro-in" placeholder="Repair Order #" value="${q.roNumber}"/></div>
+      <div class="field"><label>PO Number</label><input type="text" id="po-in" placeholder="Purchase Order #" value="${q.poNumber}"/></div>
+      <button class="btn btn-success btn-full" onclick="acceptQuote('${q.id}')">Customer Accepted — Mark Accepted</button>
+    </div>`;}
+
+  if(isMyQuote&&q.status==='accepted'){
+    return`<div class="card" style="background:var(--info-bg);border-color:#93c5fd;margin-bottom:12px;">
+      <p style="font-size:13px;color:#1e40af;font-weight:600;margin-bottom:12px;">Customer accepted. Mark complete when repairs are finished.</p>
+      <button class="btn btn-primary btn-full" onclick="completeQuote('${q.id}')">Mark as Completed</button>
+    </div>`;}
+
+  return'';}
+
+function approveQuote(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  q.status='approved';q.approvedAt=Date.now();S.currentQuote=q;save();toast('Quote approved!');render();
+}
+function denyQuote(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  q.status='denied';S.currentQuote=q;save();toast('Quote denied.','warning');render();
+}
+function acceptQuote(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  const ro=document.getElementById('ro-in')?.value?.trim();
+  const po=document.getElementById('po-in')?.value?.trim();
+  if(!ro){toast('Enter RO number.','error');return;}
+  if(!po){toast('Enter PO number.','error');return;}
+  q.status='accepted';q.roNumber=ro;q.poNumber=po;q.acceptedAt=Date.now();
+  S.currentQuote=q;save();toast('Marked as accepted!');render();
+}
+function completeQuote(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  q.status='completed';q.completedAt=Date.now();S.currentQuote=q;save();toast('Repair marked complete!');render();
+}
+
+// ============================================================
+// PDF INVOICE
+// ============================================================
+function buildPDFDoc(q){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'pt',format:'letter'});
+  const W=612,margin=48;
+  let y=margin;
+
+  // Header bar
+  doc.setFillColor(200,16,46);
+  doc.rect(0,0,W,70,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text('Dale Earnhardt Jr. Collision Center',margin,28);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');
+  doc.text('PDR & Repair Invoice',margin,48);
+  doc.setFontSize(9);
+  doc.text(`Invoice Date: ${fmtDate(Date.now())}`,W-margin,28,{align:'right'});
+  if(q.roNumber) doc.text(`RO: ${q.roNumber}`,W-margin,42,{align:'right'});
+  if(q.poNumber) doc.text(`PO: ${q.poNumber}`,W-margin,56,{align:'right'});
+
+  y=90;
+  doc.setTextColor(26,26,46);
+
+  // Customer info
+  doc.setFillColor(244,245,247);
+  doc.rect(margin,y,W-margin*2,60,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('CUSTOMER',margin+12,y+16);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);
+  doc.text(q.customerName,margin+12,y+32);
+  doc.setFontSize(10);doc.setTextColor(107,114,128);
+  doc.text(`${q.vehicleType||''} — ${q.vehicle}`,margin+12,y+48);
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(26,26,46);
+  doc.text('ADVISOR',W/2+12,y+16);
+  doc.setFont('helvetica','normal');doc.setFontSize(11);
+  doc.text(q.advisorName,W/2+12,y+32);
+  doc.setFontSize(10);doc.setTextColor(107,114,128);
+  doc.text(`Date: ${fmtDate(q.createdAt)}`,W/2+12,y+48);
+  y+=72;
+
+  // Line items header
+  doc.setTextColor(26,26,46);
+  doc.setFillColor(200,16,46);
+  doc.rect(margin,y,W-margin*2,22,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(10);doc.setFont('helvetica','bold');
+  doc.text('REPAIR DESCRIPTION',margin+10,y+15);
+  doc.text('DETAIL',margin+280,y+15);
+  doc.text('PRICE',W-margin-10,y+15,{align:'right'});
+  y+=22;
+
+  doc.setTextColor(26,26,46);
+  q.lineItems.forEach((item,i)=>{
+    if(i%2===0){doc.setFillColor(249,249,251);doc.rect(margin,y,W-margin*2,28,'F');}
+    doc.setFont('helvetica','bold');doc.setFontSize(10);
+    doc.text(item.name,margin+10,y+12);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(107,114,128);
+    doc.text(item.detail,margin+280,y+12);
+    doc.setTextColor(26,26,46);doc.setFontSize(11);doc.setFont('helvetica','bold');
+    doc.text(fmtMoney(item.price),W-margin-10,y+16,{align:'right'});
+    y+=28;
+  });
+
+  // Total
+  y+=8;
+  doc.setDrawColor(200,16,46);doc.setLineWidth(1.5);
+  doc.line(margin,y,W-margin,y);y+=16;
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(200,16,46);
+  doc.text('TOTAL',margin+10,y+2);
+  doc.setFontSize(16);
+  doc.text(fmtMoney(q.total),W-margin-10,y+2,{align:'right'});
+  y+=28;
+
+  // Notes
+  if(q.notes){
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(107,114,128);
+    doc.text('NOTES',margin,y+12);
+    doc.setFont('helvetica','normal');doc.setTextColor(26,26,46);
+    const lines=doc.splitTextToSize(q.notes,W-margin*2-20);
+    doc.text(lines,margin,y+24);
+    y+=24+lines.length*12;
+  }
+
+  // Footer
+  doc.setFontSize(8);doc.setTextColor(107,114,128);doc.setFont('helvetica','normal');
+  doc.text('Dale Earnhardt Jr. Collision Center — Thank you for your business.',W/2,750,{align:'center'});
+
+  return doc;
+}
+
+function downloadPDF(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  try{
+    const doc=buildPDFDoc(q);
+    doc.save(`Invoice-${q.customerName.replace(/\s+/g,'-')}-${q.roNumber||q.id}.pdf`);
+    toast('PDF downloaded!');
+  }catch(e){toast('PDF generation failed. Make sure the app is fully loaded.','error');}
+}
+
+function emailInvoice(id){
+  const q=S.quotes.find(x=>x.id===id);if(!q)return;
+  try{
+    const doc=buildPDFDoc(q);
+    const pdfBlob=doc.output('blob');
+    // Download PDF first, then open Outlook with pre-filled email
+    const url=URL.createObjectURL(pdfBlob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`Invoice-${q.customerName.replace(/\s+/g,'-')}.pdf`;a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(()=>{
+      const subject=encodeURIComponent(`Repair Invoice — ${q.customerName} — ${q.vehicle}`);
+      const body=encodeURIComponent(
+        `Dear ${q.customerName},\n\nPlease find attached your repair invoice from Dale Earnhardt Jr. Collision Center.\n\n`+
+        `Vehicle: ${q.vehicleType} — ${q.vehicle}\n`+
+        `RO Number: ${q.roNumber||'Pending'}\n`+
+        `PO Number: ${q.poNumber||'Pending'}\n`+
+        `Total: ${fmtMoney(q.total)}\n\n`+
+        `Repair Summary:\n${q.lineItems.map(i=>`• ${i.name} — ${fmtMoney(i.price)}`).join('\n')}\n\n`+
+        `Thank you for choosing Dale Earnhardt Jr. Collision Center.\n\nBest regards,\n${q.advisorName}`
+      );
+      window.location.href=`mailto:?subject=${subject}&body=${body}`;
+    },800);
+    toast('PDF downloaded — attach it to the email that opens.');
+  }catch(e){toast('Could not generate invoice.','error');}
+}
+
+// ============================================================
+// TECH QUEUE
+// ============================================================
+function renderTechQueue(){
+  const pending=S.quotes.filter(q=>q.status==='pending').sort((a,b)=>a.createdAt-b.createdAt);
+  return`
+    <div class="notif-banner">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="notif-text">${pending.length} quote${pending.length!==1?'s':''} awaiting your approval.</span>
+    </div>
+    ${pending.length===0?`<div class="empty-state">${iWrench(48)}<p>No quotes pending approval.</p></div>`:
+    pending.map(q=>`
+      <div class="quote-item" onclick="openQuote('${q.id}','tech_queue')">
+        <div class="quote-item-header">
+          <div><div class="quote-customer">${q.customerName}</div><div class="quote-meta">${q.vehicleType||''} — ${q.vehicle}</div></div>
+          <span class="quote-price">${fmtMoney(q.total)}</span>
+        </div>
+        <div class="quote-meta">Advisor: ${q.advisorName} &bull; ${fmtDate(q.createdAt)}</div>
+        <div class="quote-meta mt-8">${q.lineItems.map(i=>i.name).join(', ')}</div>
+      </div>`).join('')}
+  `;}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function renderReports(){
+  const days=parseInt(S.reportFilter);
+  const cutoff=Date.now()-days*86400000;
+  const data=S.quotes.filter(q=>q.createdAt>=cutoff&&(q.status==='accepted'||q.status==='completed'));
+  const byAdvisor={};
+  data.forEach(q=>{
+    if(!byAdvisor[q.advisorName])byAdvisor[q.advisorName]={count:0,total:0};
+    byAdvisor[q.advisorName].count++;
+    byAdvisor[q.advisorName].total+=q.total;
+  });
+  const rows=Object.entries(byAdvisor).sort((a,b)=>b[1].total-a[1].total);
+  const grand=data.reduce((s,q)=>s+q.total,0);
+
+  return`
+    <div class="tabs">
+      ${['7','30','90','365'].map(d=>`<button class="tab ${S.reportFilter===d?'active':''}" onclick="S.reportFilter='${d}';render()">${d==='365'?'1 Year':d+' Days'}</button>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Quotes Sold</div>
+        <div style="font-size:28px;font-weight:800;color:var(--primary);">${data.length}</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;text-align:center;box-shadow:var(--shadow);">
+        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Revenue</div>
+        <div style="font-size:28px;font-weight:800;color:var(--primary);">${fmtMoney(grand)}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title mb-0">Sales by Advisor</div>
+        <button class="btn btn-sm btn-secondary" onclick="exportCSV()">Export CSV</button>
+      </div>
+      ${rows.length===0?`<p style="font-size:13px;color:var(--text-muted);">No accepted quotes in this period.</p>`:`
+      <table class="report-table">
+        <thead><tr><th>Advisor</th><th>Quotes</th><th>Revenue</th></tr></thead>
+        <tbody>${rows.map(([name,d])=>`
+          <tr><td style="font-weight:600;">${name}</td><td>${d.count}</td><td style="font-weight:700;color:var(--primary);">${fmtMoney(d.total)}</td></tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+    <div class="card">
+      <div class="card-title">All Accepted / Completed Quotes</div>
+      ${data.length===0?`<p style="font-size:13px;color:var(--text-muted);">None in this period.</p>`:`
+      <table class="report-table" style="font-size:12px;">
+        <thead><tr><th>Customer</th><th>Advisor</th><th>RO</th><th>Total</th></tr></thead>
+        <tbody>${[...data].sort((a,b)=>(b.acceptedAt||0)-(a.acceptedAt||0)).map(q=>`
+          <tr onclick="openQuote('${q.id}','reports')" style="cursor:pointer;">
+            <td>${q.customerName}</td><td>${q.advisorName}</td><td>${q.roNumber||'—'}</td>
+            <td style="font-weight:700;">${fmtMoney(q.total)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+  `;}
+
+function exportCSV(){
+  const days=parseInt(S.reportFilter);
+  const cutoff=Date.now()-days*86400000;
+  const data=S.quotes.filter(q=>q.createdAt>=cutoff&&(q.status==='accepted'||q.status==='completed'));
+  const header='Date,Customer,Vehicle Type,Vehicle,Advisor,RO,PO,Total,Status,Items\n';
+  const rows=data.map(q=>`${fmtDate(q.createdAt)},"${q.customerName}","${q.vehicleType||''}","${q.vehicle}","${q.advisorName}","${q.roNumber}","${q.poNumber}","${fmtMoney(q.total)}","${q.status}","${q.lineItems.map(i=>i.name).join('; ')}"`).join('\n');
+  const blob=new Blob([header+rows],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`collision-report-${days}days.csv`;a.click();URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function renderAdmin(){
+  return`
+    <div class="card">
+      <div class="card-title">Users</div>
+      ${S.users.map(u=>`
+        <div class="detail-row">
+          <span class="detail-label">${u.name} <span style="font-size:11px;color:var(--text-light);">@${u.username}</span></span>
+          <span class="badge ${u.role==='admin'?'badge-accepted':u.role==='tech'?'badge-approved':'badge-pending'}">${cap(u.role)}</span>
+        </div>`).join('')}
+      <button class="btn btn-outline btn-full mt-12" onclick="document.getElementById('add-user-form').classList.toggle('hidden')">+ Add User</button>
+    </div>
+    <div id="add-user-form" class="card hidden">
+      <div class="card-title">New User</div>
+      <div class="field"><label>Full Name</label><input type="text" id="nu-name"/></div>
+      <div class="field"><label>Username</label><input type="text" id="nu-user" autocapitalize="none"/></div>
+      <div class="field"><label>Password</label><input type="password" id="nu-pass"/></div>
+      <div class="field"><label>Role</label><select id="nu-role"><option value="advisor">Advisor</option><option value="tech">Tech</option><option value="admin">Admin</option></select></div>
+      <div class="flex-row">
+        <button class="btn btn-primary flex-1" onclick="createUser()">Create</button>
+        <button class="btn btn-secondary flex-1" onclick="document.getElementById('add-user-form').classList.add('hidden')">Cancel</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">PDR Pricing Matrix</div>
+      <div style="overflow-x:auto;">
+        <table class="matrix-table">
+          <thead><tr><th>Size</th>${PDR_SEVERITY.map(s=>`<th>${s}</th>`).join('')}</tr></thead>
+          <tbody>${PDR_SIZES.map((s,si)=>`<tr><td>${s}</td>${PDR_MATRIX[si].map(p=>`<td>${fmtMoney(p)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+  `;}
+
+function createUser(){
+  const name=document.getElementById('nu-name').value.trim();
+  const username=document.getElementById('nu-user').value.trim().toLowerCase();
+  const pass=document.getElementById('nu-pass').value;
+  const role=document.getElementById('nu-role').value;
+  if(!name||!username||!pass){toast('Fill all fields.','error');return;}
+  if(S.users.find(u=>u.username===username)){toast('Username taken.','error');return;}
+  S.users.push({id:genId(),username,password:pass,name,role});
+  save();toast('User created!');render();
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+function bindEvents(){
+  const lp=document.getElementById('lp');
+  if(lp)lp.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+}
+
+// ============================================================
+// ICONS
+// ============================================================
+function iDoc(s=22){return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;}
+function iPlus(s=22){return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`;}
+function iWrench(s=22){return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>`;}
+function iChart(s=22){return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;}
+function iSettings(s=22){return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`;}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
