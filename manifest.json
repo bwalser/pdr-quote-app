@@ -1,0 +1,26 @@
+{
+  "name": "PDR Quote Tool — Hendrick Collision",
+  "short_name": "PDR Quote",
+  "description": "PDR, rim, and bumper repair quoting tool for service advisors",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#c8102e",
+  "theme_color": "#c8102e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "utilities"],
+  "lang": "en-US"
+}
