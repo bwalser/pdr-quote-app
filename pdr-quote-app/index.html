@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#1a1a2e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="PDR Quote"/>
+<link rel="manifest" href="manifest.json"/>
+<title>PDR Quote Tool</title>
+<style>
+  :root {
+    --primary: #c8102e;
+    --primary-dark: #9e0b22;
+    --primary-light: #f5e6e9;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #f9f9fb;
+    --border: #e2e4e9;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --info: #3b82f6;
+    --info-bg: #eff6ff;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; min-height: 100vh; }
+  
+  /* LAYOUT */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+  .header { background: var(--primary); color: white; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header h1 { font-size: 17px; font-weight: 600; }
+  .header-sub { font-size: 12px; opacity: 0.8; }
+  .back-btn { background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 4px; }
+  .content { flex: 1; padding: 16px; max-width: 500px; margin: 0 auto; width: 100%; }
+  
+  /* NAV */
+  .bottom-nav { background: var(--surface); border-top: 1px solid var(--border); display: flex; position: sticky; bottom: 0; z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; gap: 3px; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 11px; font-weight: 500; position: relative; }
+  .nav-item.active { color: var(--primary); }
+  .nav-item svg { width: 22px; height: 22px; }
+  .nav-badge { position: absolute; top: 6px; right: calc(50% - 18px); background: var(--primary); color: white; border-radius: 10px; font-size: 10px; font-weight: 700; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+  
+  /* CARDS */
+  .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  
+  /* FORMS */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 15px; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 18px; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:active { background: var(--primary-dark); }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-sm { padding: 7px 12px; font-size: 13px; }
+  .btn-full { width: 100%; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-pending { background: var(--warning-bg); color: #92400e; }
+  .badge-approved { background: var(--success-bg); color: #065f46; }
+  .badge-accepted { background: var(--info-bg); color: #1e40af; }
+  .badge-completed { background: #f3f4f6; color: #374151; }
+  
+  /* QUOTE LIST */
+  .quote-item { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; box-shadow: var(--shadow); active: var(--bg); }
+  .quote-item:active { background: var(--bg); }
+  .quote-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .quote-customer { font-weight: 600; font-size: 15px; }
+  .quote-meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .quote-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .quote-price { font-size: 17px; font-weight: 700; color: var(--primary); }
+  
+  /* PDR MATRIX */
+  .matrix-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .matrix-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .matrix-table th { background: var(--bg); padding: 8px 6px; text-align: center; font-weight: 600; color: var(--text-muted); font-size: 12px; border: 1px solid var(--border); }
+  .matrix-table td { padding: 7px 4px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+  .matrix-table td:hover { background: var(--primary-light); }
+  .matrix-table td.selected { background: var(--primary); color: white; font-weight: 600; }
+  .matrix-table td:first-child { font-weight: 500; color: var(--text-muted); background: var(--bg); cursor: default; font-size: 12px; }
+  
+  /* REPAIR TYPE SELECTOR */
+  .repair-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .repair-type-btn { padding: 10px 8px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+  .repair-type-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  
+  /* LINE ITEMS */
+  .line-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .line-item:last-child { border-bottom: none; }
+  .line-item-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .line-item-detail { font-size: 12px; color: var(--text-muted); }
+  .line-item-price { font-size: 15px; font-weight: 600; color: var(--text); }
+  .line-item-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 20px; padding: 0 0 0 10px; }
+  
+  /* PHOTOS */
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .photo-thumb { aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; position: relative; }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove-photo { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); border: none; color: white; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .photo-add { aspect-ratio: 1; border-radius: var(--radius); border: 1.5px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: var(--surface2); color: var(--text-muted); font-size: 12px; gap: 4px; }
+  .photo-add svg { width: 24px; height: 24px; }
+  
+  /* NOTIFICATION BANNER */
+  .notif-banner { background: var(--warning-bg); border: 1px solid #fcd34d; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; }
+  .notif-banner svg { width: 18px; height: 18px; color: var(--warning); flex-shrink: 0; margin-top: 1px; }
+  .notif-text { font-size: 13px; color: #78350f; line-height: 1.4; }
+  
+  /* TOTAL ROW */
+  .total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0 0; border-top: 2px solid var(--text); margin-top: 4px; }
+  .total-label { font-size: 16px; font-weight: 700; }
+  .total-price { font-size: 22px; font-weight: 800; color: var(--primary); }
+  
+  /* OVERRIDE INPUT */
+  .override-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .override-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; }
+  
+  /* TABS */
+  .tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px; margin-bottom: 16px; }
+  .tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: var(--text-muted); border: none; background: none; }
+  .tab.active { background: var(--primary); color: white; }
+  
+  /* REPORT TABLE */
+  .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .report-table th { background: var(--bg); padding: 9px 10px; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .report-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .report-table tr:last-child td { border-bottom: none; }
+  
+  /* LOGIN */
+  .login-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: var(--primary); }
+  .login-logo { width: 64px; height: 64px; background: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+  .login-logo svg { width: 36px; height: 36px; color: var(--primary); }
+  .login-title { color: white; font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+  .login-sub { color: rgba(255,255,255,0.75); font-size: 14px; margin-bottom: 32px; }
+  .login-card { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 380px; }
+  .login-card .field input { font-size: 16px; }
+  .error-msg { background: var(--danger-bg); color: #991b1b; border-radius: var(--radius); padding: 10px 12px; font-size: 13px; margin-bottom: 12px; }
+  
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+  
+  /* DETAIL VIEW */
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: var(--text-muted); }
+  .detail-value { font-weight: 500; text-align: right; max-width: 60%; }
+  
+  /* SETUP */
+  .setup-screen { min-height: 100vh; background: var(--bg); padding: 24px; }
+  .setup-screen h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .setup-screen p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+  code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; font-family: monospace; font-size: 13px; }
+  .setup-step { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+  .setup-step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--primary); color: white; border-radius: 50%; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .setup-step h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .setup-step p { font-size: 13px; margin-bottom: 8px; }
+  
+  /* UTILITY */
+  .flex-row { display: flex; gap: 8px; }
+  .flex-1 { flex: 1; }
+  .text-muted { color: var(--text-muted); }
+  .text-sm { font-size: 13px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mb-0 { margin-bottom: 0; }
+  .fw-600 { font-weight: 600; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ============================================================
+// CONFIG — paste your Supabase credentials here
+// ============================================================
+const SUPABASE_URL = localStorage.getItem('sb_url') || '';
+const SUPABASE_KEY = localStorage.getItem('sb_key') || '';
+
+// ============================================================
+// PDR PRICING MATRIX  (rows = size, cols = severity)
+// ============================================================
+const PDR_SIZES = ['Dime', 'Quarter', 'Half Dollar', 'Dollar', 'Hand Size', 'Larger'];
+const PDR_SEVERITY = ['Shallow', 'Medium', 'Deep'];
+const PDR_MATRIX = [
+  [65,   95,  130],   // Dime
+  [95,  130,  175],   // Quarter
+  [130, 175,  225],   // Half Dollar
+  [175, 225,  295],   // Dollar
+  [225, 295,  395],   // Hand Size
+  [295, 395,  495],   // Larger
+];
+
+const RIM_REPAIRS = [
+  { label: 'Scuff / Curb Rash', price: 125 },
+  { label: 'Deep Scratch', price: 175 },
+  { label: 'Minor Bend', price: 195 },
+  { label: 'Moderate Bend', price: 275 },
+];
+
+const BUMPER_REPAIRS = [
+  { label: 'Minor Scuff', price: 150 },
+  { label: 'Deep Scratch', price: 225 },
+  { label: 'Small Crack', price: 295 },
+  { label: 'Large Crack / Major Damage', price: 425 },
+];
+
+// ============================================================
+// LOCAL STATE (replaces Supabase if not configured)
+// ============================================================
+let state = {
+  user: null,
+  screen: 'login',
+  quotes: JSON.parse(localStorage.getItem('pdr_quotes') || '[]'),
+  users: JSON.parse(localStorage.getItem('pdr_users') || JSON.stringify([
+    { id: '1', username: 'admin', password: 'admin123', name: 'Admin', role: 'admin' },
+    { id: '2', username: 'advisor1', password: 'pass123', name: 'Alex Johnson', role: 'advisor' },
+    { id: '3', username: 'tech1', password: 'pass123', name: 'Mike Torres', role: 'tech' },
+  ])),
+  pendingCount: 0,
+  activeTab: 'all',
+  currentQuote: null,
+  newQuote: null,
+  reportFilter: '30',
+  toast: null,
+};
+
+function saveState() {
+  localStorage.setItem('pdr_quotes', JSON.stringify(state.quotes));
+  localStorage.setItem('pdr_users', JSON.stringify(state.users));
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function showToast(msg, type='success') {
+  state.toast = { msg, type };
+  render();
+  setTimeout(() => { state.toast = null; render(); }, 3000);
+}
+
+function navigate(screen, data={}) {
+  state.screen = screen;
+  Object.assign(state, data);
+  window.scrollTo(0,0);
+  render();
+}
+
+// ============================================================
+// RENDER ENGINE
+// ============================================================
+function render() {
+  const app = document.getElementById('app');
+  if (!state.user) {
+    app.innerHTML = renderLogin();
+  } else if (state.screen === 'setup') {
+    app.innerHTML = renderSetup();
+  } else {
+    app.innerHTML = `
+      ${renderToast()}
+      <div id="main-app">
+        ${renderHeader()}
+        <div class="content">${renderScreen()}</div>
+        ${renderBottomNav()}
+      </div>
+    `;
+  }
+  bindEvents();
+}
+
+function renderToast() {
+  if (!state.toast) return '';
+  const bg = state.toast.type === 'error' ? 'var(--danger)' : state.toast.type === 'warning' ? 'var(--warning)' : 'var(--success)';
+  return `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:${bg};color:white;padding:14px 16px;text-align:center;font-size:14px;font-weight:600;">${state.toast.msg}</div>`;
+}
+
+function renderHeader() {
+  const titles = {
+    dashboard: 'PDR Quote Tool',
+    new_quote: 'New Quote',
+    quote_detail: 'Quote Detail',
+    reports: 'Reports',
+    admin: 'Admin',
+    quote_list: 'All Quotes',
+    tech_queue: 'Tech Queue',
+  };
+  const showBack = ['new_quote','quote_detail'].includes(state.screen);
+  const backScreen = state.screen === 'quote_detail' ? (state.prevScreen || 'dashboard') : 'dashboard';
+  return `
+    <div class="header">
+      <div class="header-left">
+        ${showBack ? `<button class="back-btn" onclick="navigate('${backScreen}')">&lsaquo;</button>` : ''}
+        <div>
+          <div class="header h1">${titles[state.screen] || 'PDR Quote Tool'}</div>
+          <div class="header-sub">${state.user.name} &bull; ${capitalize(state.user.role)}</div>
+        </div>
+      </div>
+      <button onclick="logout()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;">Logout</button>
+    </div>
+  `;
+}
+
+function renderBottomNav() {
+  const role = state.user.role;
+  const pending = state.quotes.filter(q => q.status === 'pending').length;
+  
+  let tabs = [];
+  if (role === 'advisor' || role === 'admin') {
+    tabs.push({ screen: 'dashboard', label: 'Quotes', icon: iconDoc() });
+    tabs.push({ screen: 'new_quote', label: 'New Quote', icon: iconPlus() });
+  }
+  if (role === 'tech' || role === 'admin') {
+    tabs.push({ screen: 'tech_queue', label: 'Queue', icon: iconWrench(), badge: pending > 0 ? pending : 0 });
+  }
+  if (role === 'admin') {
+    tabs.push({ screen: 'reports', label: 'Reports', icon: iconChart() });
+    tabs.push({ screen: 'admin', label: 'Admin', icon: iconSettings() });
+  } else {
+    tabs.push({ screen: 'reports', label: 'Reports', icon: iconChart() });
+  }
+
+  return `<div class="bottom-nav">${tabs.map(t => `
+    <button class="nav-item ${state.screen === t.screen ? 'active' : ''}" onclick="navigate('${t.screen}')">
+      ${t.icon}
+      ${t.badge ? `<span class="nav-badge">${t.badge}</span>` : ''}
+      ${t.label}
+    </button>`).join('')}</div>`;
+}
+
+function renderScreen() {
+  switch(state.screen) {
+    case 'dashboard': return renderDashboard();
+    case 'new_quote': return renderNewQuote();
+    case 'quote_detail': return renderQuoteDetail();
+    case 'tech_queue': return renderTechQueue();
+    case 'reports': return renderReports();
+    case 'admin': return renderAdmin();
+    default: return renderDashboard();
+  }
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+function renderLogin() {
+  return `
+    <div class="login-screen">
+      <div class="login-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2z"/><path d="M12 17v4m-4 0h8"/></svg>
+      </div>
+      <div class="login-title">PDR Quote Tool</div>
+      <div class="login-sub">Hendrick Collision</div>
+      <div class="login-card">
+        <div id="login-error"></div>
+        <div class="field">
+          <label>Username</label>
+          <input type="text" id="login-user" placeholder="Enter username" autocapitalize="none"/>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="login-pass" placeholder="Enter password"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+        <p style="text-align:center;margin-top:14px;font-size:12px;color:#6b7280;">
+          Demo: admin/admin123 &bull; advisor1/pass123 &bull; tech1/pass123
+        </p>
+      </div>
+    </div>`;
+}
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim().toLowerCase();
+  const p = document.getElementById('login-pass').value;
+  const user = state.users.find(x => x.username.toLowerCase() === u && x.password === p);
+  if (!user) {
+    document.getElementById('login-error').innerHTML = '<div class="error-msg">Invalid username or password.</div>';
+    return;
+  }
+  state.user = user;
+  navigate('dashboard');
+}
+
+function logout() {
+  state.user = null;
+  state.screen = 'login';
+  render();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const myQuotes = state.user.role === 'admin'
+    ? state.quotes
+    : state.quotes.filter(q => q.advisorId === state.user.id);
+  
+  const tabs = ['all','pending','approved','accepted','completed'];
+  const filtered = state.activeTab === 'all' ? myQuotes : myQuotes.filter(q => q.status === state.activeTab);
+  const sorted = [...filtered].sort((a,b) => b.createdAt - a.createdAt);
+
+  return `
+    <div style="overflow-x:auto;margin-bottom:14px;">
+      <div style="display:flex;gap:6px;min-width:max-content;">
+        ${tabs.map(t => `<button class="tab ${state.activeTab===t?'active':''}" style="flex:none;padding:7px 14px;" onclick="setTab('${t}')">${capitalize(t)}</button>`).join('')}
+      </div>
+    </div>
+    ${sorted.length === 0 ? `
+      <div class="empty-state">
+        ${iconDoc(48)}
+        <p>No ${state.activeTab === 'all' ? '' : state.activeTab + ' '}quotes yet.</p>
+        ${state.user.role !== 'tech' ? `<button class="btn btn-primary mt-12" onclick="navigate('new_quote')">Create Quote</button>` : ''}
+      </div>` : sorted.map(renderQuoteCard).join('')}
+  `;
+}
+
+function setTab(tab) { state.activeTab = tab; render(); }
+
+function renderQuoteCard(q) {
+  return `
+    <div class="quote-item" onclick="openQuote('${q.id}','dashboard')">
+      <div class="quote-item-header">
+        <div>
+          <div class="quote-customer">${q.customerName}</div>
+          <div class="quote-meta">${q.vehicle} &bull; ${formatDate(q.createdAt)}</div>
+        </div>
+        <span class="badge badge-${q.status}">${capitalize(q.status)}</span>
+      </div>
+      <div class="quote-meta">${q.lineItems.length} item${q.lineItems.length !== 1 ? 's' : ''} &bull; Advisor: ${q.advisorName}</div>
+      <div class="quote-footer">
+        <span class="text-sm text-muted">${q.roNumber ? 'RO: ' + q.roNumber : 'No RO yet'}</span>
+        <span class="quote-price">$${q.total.toFixed(2)}</span>
+      </div>
+    </div>`;
+}
+
+function openQuote(id, prev) {
+  state.currentQuote = state.quotes.find(q => q.id === id);
+  state.prevScreen = prev || 'dashboard';
+  navigate('quote_detail');
+}
+
+// ============================================================
+// NEW QUOTE
+// ============================================================
+function renderNewQuote() {
+  if (!state.newQuote) {
+    state.newQuote = {
+      repairType: 'pdr',
+      pdrSelection: null,
+      pdrOverride: '',
+      rimType: null,
+      bumperType: null,
+      lineItems: [],
+      photos: [],
+      customerName: '',
+      vehicle: '',
+      notes: '',
+    };
+  }
+  const q = state.newQuote;
+
+  return `
+    <div class="card">
+      <div class="card-title">Customer & Vehicle</div>
+      <div class="field"><label>Customer Name</label>
+        <input type="text" id="nq-customer" value="${q.customerName}" placeholder="Full name" oninput="updateNQ('customerName',this.value)"/>
+      </div>
+      <div class="field mb-0"><label>Vehicle (Year / Make / Model)</label>
+        <input type="text" id="nq-vehicle" value="${q.vehicle}" placeholder="e.g. 2022 Toyota Camry" oninput="updateNQ('vehicle',this.value)"/>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Repair Type</div>
+      <div class="repair-types">
+        <button class="repair-type-btn ${q.repairType==='pdr'?'active':''}" onclick="setRepairType('pdr')">
+          ${iconDent()} PDR
+        </button>
+        <button class="repair-type-btn ${q.repairType==='rim'?'active':''}" onclick="setRepairType('rim')">
+          ${iconRim()} Rim Repair
+        </button>
+        <button class="repair-type-btn ${q.repairType==='bumper'?'active':''}" onclick="setRepairType('bumper')">
+          ${iconBumper()} Bumper Repair
+        </button>
+        <button class="repair-type-btn ${q.repairType==='other'?'active':''}" onclick="setRepairType('other')">
+          ${iconOther()} Other
+        </button>
+      </div>
+
+      ${q.repairType === 'pdr' ? renderPDRSelector() : ''}
+      ${q.repairType === 'rim' ? renderRimSelector() : ''}
+      ${q.repairType === 'bumper' ? renderBumperSelector() : ''}
+      ${q.repairType === 'other' ? renderOtherSelector() : ''}
+
+      <button class="btn btn-outline btn-full mt-12" onclick="addLineItem()">
+        + Add to Quote
+      </button>
+    </div>
+
+    ${q.lineItems.length > 0 ? `
+    <div class="card">
+      <div class="card-title">Quote Items</div>
+      ${q.lineItems.map((item, i) => `
+        <div class="line-item">
+          <div>
+            <div class="line-item-name">${item.name}</div>
+            <div class="line-item-detail">${item.detail}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="line-item-price">$${item.price.toFixed(2)}</span>
+            <button class="line-item-remove" onclick="removeLineItem(${i})">×</button>
+          </div>
+        </div>`).join('')}
+      <div class="total-row">
+        <span class="total-label">Total</span>
+        <span class="total-price">$${q.lineItems.reduce((s,i)=>s+i.price,0).toFixed(2)}</span>
+      </div>
+    </div>` : ''}
+
+    <div class="card">
+      <div class="card-title">Photos (up to 5)</div>
+      <div class="photo-grid" id="photo-grid">
+        ${renderPhotoGrid()}
+      </div>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden" onchange="addPhoto(this)"/>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notes (Optional)</div>
+      <div class="field mb-0">
+        <textarea id="nq-notes" placeholder="Additional notes..." oninput="updateNQ('notes',this.value)">${q.notes}</textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" style="margin-bottom:24px;" onclick="submitQuote()">
+      Submit Quote for Approval
+    </button>
+  `;
+}
+
+function renderPDRSelector() {
+  const q = state.newQuote;
+  return `
+    <div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Select dent size and severity:</p>
+      <div style="overflow-x:auto;">
+        <table class="matrix-table">
+          <thead><tr>
+            <th>Size</th>
+            ${PDR_SEVERITY.map(s=>`<th>${s}</th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${PDR_SIZES.map((size, si) => `<tr>
+              <td>${size}</td>
+              ${PDR_MATRIX[si].map((price, pi) => {
+                const sel = q.pdrSelection && q.pdrSelection.si === si && q.pdrSelection.pi === pi;
+                return `<td class="${sel?'selected':''}" onclick="selectPDR(${si},${pi})">$${price}</td>`;
+              }).join('')}
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${q.pdrSelection !== null ? `
+        <div class="override-row">
+          <span style="font-size:13px;color:var(--text-muted);">Override price:</span>
+          <input type="number" placeholder="$0.00" value="${q.pdrOverride}" oninput="updateNQ('pdrOverride',this.value)" style="width:100px;"/>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderRimSelector() {
+  const q = state.newQuote;
+  return `
+    <div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Select repair type:</p>
+      ${RIM_REPAIRS.map((r,i) => `
+        <div class="repair-type-btn ${q.rimType===i?'active':''}" style="margin-bottom:7px;display:flex;justify-content:space-between;" onclick="state.newQuote.rimType=${i};render()">
+          <span>${r.label}</span><span>$${r.price}</span>
+        </div>`).join('')}
+      ${q.rimType !== null ? `
+        <div class="override-row">
+          <span style="font-size:13px;color:var(--text-muted);">Override price:</span>
+          <input type="number" placeholder="$0.00" value="${q.pdrOverride}" oninput="updateNQ('pdrOverride',this.value)" style="width:100px;"/>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderBumperSelector() {
+  const q = state.newQuote;
+  return `
+    <div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">Select damage type:</p>
+      ${BUMPER_REPAIRS.map((r,i) => `
+        <div class="repair-type-btn ${q.bumperType===i?'active':''}" style="margin-bottom:7px;display:flex;justify-content:space-between;" onclick="state.newQuote.bumperType=${i};render()">
+          <span>${r.label}</span><span>$${r.price}</span>
+        </div>`).join('')}
+      ${q.bumperType !== null ? `
+        <div class="override-row">
+          <span style="font-size:13px;color:var(--text-muted);">Override price:</span>
+          <input type="number" placeholder="$0.00" value="${q.pdrOverride}" oninput="updateNQ('pdrOverride',this.value)" style="width:100px;"/>
+        </div>` : ''}
+    </div>`;
+}
+
+function renderOtherSelector() {
+  return `
+    <div>
+      <div class="field mt-12"><label>Description</label>
+        <input type="text" id="other-desc" placeholder="Describe the repair..." />
+      </div>
+      <div class="field mb-0"><label>Price</label>
+        <input type="number" id="other-price" placeholder="$0.00" />
+      </div>
+    </div>`;
+}
+
+function renderPhotoGrid() {
+  const q = state.newQuote;
+  let html = q.photos.map((p,i) => `
+    <div class="photo-thumb">
+      <img src="${p}" alt="Photo ${i+1}"/>
+      <button class="remove-photo" onclick="removePhoto(${i})">×</button>
+    </div>`).join('');
+  if (q.photos.length < 5) {
+    html += `<div class="photo-add" onclick="document.getElementById('photo-input').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 4v16m8-8H4"/></svg>
+      <span>Add Photo</span>
+    </div>`;
+  }
+  return html;
+}
+
+function updateNQ(key, val) { state.newQuote[key] = val; }
+
+function setRepairType(type) {
+  state.newQuote.repairType = type;
+  state.newQuote.pdrSelection = null;
+  state.newQuote.rimType = null;
+  state.newQuote.bumperType = null;
+  state.newQuote.pdrOverride = '';
+  render();
+}
+
+function selectPDR(si, pi) {
+  state.newQuote.pdrSelection = { si, pi };
+  state.newQuote.pdrOverride = '';
+  render();
+}
+
+function addLineItem() {
+  const q = state.newQuote;
+  let name, detail, price;
+
+  if (q.repairType === 'pdr') {
+    if (!q.pdrSelection) { showToast('Select a dent size and severity first.', 'error'); return; }
+    const basePrice = PDR_MATRIX[q.pdrSelection.si][q.pdrSelection.pi];
+    price = q.pdrOverride ? parseFloat(q.pdrOverride) : basePrice;
+    name = 'PDR — ' + PDR_SIZES[q.pdrSelection.si];
+    detail = PDR_SEVERITY[q.pdrSelection.pi] + ' severity' + (q.pdrOverride ? ' (price override)' : '');
+  } else if (q.repairType === 'rim') {
+    if (q.rimType === null) { showToast('Select a rim repair type.', 'error'); return; }
+    price = q.pdrOverride ? parseFloat(q.pdrOverride) : RIM_REPAIRS[q.rimType].price;
+    name = 'Rim Repair — ' + RIM_REPAIRS[q.rimType].label;
+    detail = q.pdrOverride ? 'Price override' : 'Standard pricing';
+  } else if (q.repairType === 'bumper') {
+    if (q.bumperType === null) { showToast('Select a bumper repair type.', 'error'); return; }
+    price = q.pdrOverride ? parseFloat(q.pdrOverride) : BUMPER_REPAIRS[q.bumperType].price;
+    name = 'Bumper Repair — ' + BUMPER_REPAIRS[q.bumperType].label;
+    detail = q.pdrOverride ? 'Price override' : 'Standard pricing';
+  } else {
+    const desc = document.getElementById('other-desc')?.value;
+    const p = document.getElementById('other-price')?.value;
+    if (!desc || !p) { showToast('Enter description and price.', 'error'); return; }
+    name = desc;
+    detail = 'Custom repair';
+    price = parseFloat(p);
+  }
+
+  if (isNaN(price) || price <= 0) { showToast('Invalid price.', 'error'); return; }
+  q.lineItems.push({ name, detail, price });
+  q.pdrSelection = null;
+  q.rimType = null;
+  q.bumperType = null;
+  q.pdrOverride = '';
+  showToast('Item added!');
+}
+
+function removeLineItem(i) {
+  state.newQuote.lineItems.splice(i, 1);
+  render();
+}
+
+function addPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.newQuote.photos.push(e.target.result);
+    document.getElementById('photo-grid').innerHTML = renderPhotoGrid();
+    bindEvents();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function removePhoto(i) {
+  state.newQuote.photos.splice(i, 1);
+  render();
+}
+
+function submitQuote() {
+  const q = state.newQuote;
+  if (!q.customerName.trim()) { showToast('Enter customer name.', 'error'); return; }
+  if (!q.vehicle.trim()) { showToast('Enter vehicle info.', 'error'); return; }
+  if (q.lineItems.length === 0) { showToast('Add at least one repair item.', 'error'); return; }
+
+  const quote = {
+    id: genId(),
+    customerName: q.customerName.trim(),
+    vehicle: q.vehicle.trim(),
+    notes: q.notes,
+    lineItems: q.lineItems,
+    photos: q.photos,
+    total: q.lineItems.reduce((s,i) => s+i.price, 0),
+    status: 'pending',
+    advisorId: state.user.id,
+    advisorName: state.user.name,
+    roNumber: '',
+    createdAt: Date.now(),
+    approvedAt: null,
+    acceptedAt: null,
+  };
+
+  state.quotes.unshift(quote);
+  state.newQuote = null;
+  saveState();
+  showToast('Quote submitted for tech approval!');
+  navigate('dashboard');
+}
+
+// ============================================================
+// QUOTE DETAIL
+// ============================================================
+function renderQuoteDetail() {
+  const q = state.currentQuote;
+  if (!q) return '<p>Quote not found.</p>';
+  const role = state.user.role;
+
+  return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;">${q.customerName}</div>
+          <div style="font-size:13px;color:var(--text-muted);">${q.vehicle}</div>
+        </div>
+        <span class="badge badge-${q.status}">${capitalize(q.status)}</span>
+      </div>
+      <div class="detail-row"><span class="detail-label">Advisor</span><span class="detail-value">${q.advisorName}</span></div>
+      <div class="detail-row"><span class="detail-label">Created</span><span class="detail-value">${formatDate(q.createdAt)}</span></div>
+      ${q.roNumber ? `<div class="detail-row"><span class="detail-label">RO Number</span><span class="detail-value fw-600">${q.roNumber}</span></div>` : ''}
+      ${q.approvedAt ? `<div class="detail-row"><span class="detail-label">Approved</span><span class="detail-value">${formatDate(q.approvedAt)}</span></div>` : ''}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Repair Items</div>
+      ${q.lineItems.map(item => `
+        <div class="line-item">
+          <div>
+            <div class="line-item-name">${item.name}</div>
+            <div class="line-item-detail">${item.detail}</div>
+          </div>
+          <span class="line-item-price">$${item.price.toFixed(2)}</span>
+        </div>`).join('')}
+      <div class="total-row">
+        <span class="total-label">Total</span>
+        <span class="total-price">$${q.total.toFixed(2)}</span>
+      </div>
+    </div>
+
+    ${q.photos && q.photos.length > 0 ? `
+    <div class="card">
+      <div class="card-title">Photos</div>
+      <div class="photo-grid">
+        ${q.photos.map(p => `<div class="photo-thumb"><img src="${p}" alt="photo"/></div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${q.notes ? `<div class="card"><div class="card-title">Notes</div><p style="font-size:14px;line-height:1.5;">${q.notes}</p></div>` : ''}
+
+    ${renderQuoteActions(q)}
+  `;
+}
+
+function renderQuoteActions(q) {
+  const role = state.user.role;
+  const isMyQuote = q.advisorId === state.user.id;
+
+  if (role === 'tech' || (role === 'admin' && q.status === 'pending')) {
+    if (q.status === 'pending') {
+      return `
+        <div class="flex-row" style="margin-bottom:24px;">
+          <button class="btn btn-success flex-1" onclick="approveQuote('${q.id}')">✓ Approve Quote</button>
+          <button class="btn btn-danger flex-1" onclick="denyQuote('${q.id}')">✗ Deny</button>
+        </div>`;
+    }
+  }
+
+  if ((role === 'advisor' && isMyQuote) || role === 'admin') {
+    if (q.status === 'approved') {
+      return `
+        <div class="card" style="background:var(--success-bg);border-color:#6ee7b7;">
+          <p style="font-size:13px;color:#065f46;margin-bottom:12px;">✓ Approved by tech. Mark as accepted when customer agrees.</p>
+          <div class="field"><label>RO Number</label>
+            <input type="text" id="ro-input" placeholder="Enter RO number" value="${q.roNumber}"/>
+          </div>
+          <button class="btn btn-success btn-full" onclick="acceptQuote('${q.id}')">Customer Accepted — Mark Complete</button>
+        </div>`;
+    }
+    if (q.status === 'accepted') {
+      return `
+        <div class="card" style="background:var(--info-bg);border-color:#93c5fd;">
+          <p style="font-size:13px;color:#1e40af;">✓ Customer accepted. Repairs in progress.</p>
+        </div>`;
+    }
+  }
+
+  return '';
+}
+
+function approveQuote(id) {
+  const q = state.quotes.find(x => x.id === id);
+  if (!q) return;
+  q.status = 'approved';
+  q.approvedAt = Date.now();
+  state.currentQuote = q;
+  saveState();
+  showToast('Quote approved!');
+  render();
+}
+
+function denyQuote(id) {
+  const q = state.quotes.find(x => x.id === id);
+  if (!q) return;
+  q.status = 'denied';
+  state.currentQuote = q;
+  saveState();
+  showToast('Quote denied.', 'warning');
+  render();
+}
+
+function acceptQuote(id) {
+  const q = state.quotes.find(x => x.id === id);
+  if (!q) return;
+  const ro = document.getElementById('ro-input')?.value?.trim();
+  if (!ro) { showToast('Enter RO number before marking accepted.', 'error'); return; }
+  q.status = 'accepted';
+  q.roNumber = ro;
+  q.acceptedAt = Date.now();
+  state.currentQuote = q;
+  saveState();
+  showToast('Quote marked as accepted!');
+  render();
+}
+
+// ============================================================
+// TECH QUEUE
+// ============================================================
+function renderTechQueue() {
+  const pending = state.quotes.filter(q => q.status === 'pending').sort((a,b) => a.createdAt - b.createdAt);
+  return `
+    <div class="notif-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <span class="notif-text">${pending.length} quote${pending.length !== 1 ? 's' : ''} waiting for approval.</span>
+    </div>
+    ${pending.length === 0 ? `
+      <div class="empty-state">
+        ${iconDoc(48)}
+        <p>No quotes pending approval.</p>
+      </div>` : pending.map(q => `
+        <div class="quote-item" onclick="openQuote('${q.id}','tech_queue')">
+          <div class="quote-item-header">
+            <div>
+              <div class="quote-customer">${q.customerName}</div>
+              <div class="quote-meta">${q.vehicle}</div>
+            </div>
+            <span class="quote-price">$${q.total.toFixed(2)}</span>
+          </div>
+          <div class="quote-meta">Advisor: ${q.advisorName} &bull; ${formatDate(q.createdAt)}</div>
+          <div class="quote-meta mt-8">${q.lineItems.map(i=>i.name).join(', ')}</div>
+        </div>`).join('')}
+  `;
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function renderReports() {
+  const days = parseInt(state.reportFilter);
+  const cutoff = Date.now() - days * 86400000;
+  const filtered = state.quotes.filter(q => q.createdAt >= cutoff && (q.status === 'accepted' || q.status === 'completed'));
+
+  const byAdvisor = {};
+  filtered.forEach(q => {
+    if (!byAdvisor[q.advisorName]) byAdvisor[q.advisorName] = { count: 0, total: 0 };
+    byAdvisor[q.advisorName].count++;
+    byAdvisor[q.advisorName].total += q.total;
+  });
+  const advisorRows = Object.entries(byAdvisor).sort((a,b) => b[1].total - a[1].total);
+  const grandTotal = filtered.reduce((s,q) => s+q.total, 0);
+
+  return `
+    <div class="card">
+      <div class="card-title">Date Range</div>
+      <div class="tabs">
+        <button class="tab ${state.reportFilter==='7'?'active':''}" onclick="state.reportFilter='7';render()">7 Days</button>
+        <button class="tab ${state.reportFilter==='30'?'active':''}" onclick="state.reportFilter='30';render()">30 Days</button>
+        <button class="tab ${state.reportFilter==='90'?'active':''}" onclick="state.reportFilter='90';render()">90 Days</button>
+        <button class="tab ${state.reportFilter==='365'?'active':''}" onclick="state.reportFilter='365';render()">1 Year</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:var(--bg);border-radius:var(--radius);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Quotes Sold</div>
+          <div style="font-size:26px;font-weight:800;color:var(--primary);">${filtered.length}</div>
+        </div>
+        <div style="background:var(--bg);border-radius:var(--radius);padding:12px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Total Revenue</div>
+          <div style="font-size:26px;font-weight:800;color:var(--primary);">$${grandTotal.toFixed(0)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div class="card-title mb-0">Sales by Advisor</div>
+        <button class="btn btn-sm btn-secondary" onclick="exportCSV()">Export CSV</button>
+      </div>
+      ${advisorRows.length === 0 ? `<p class="text-sm text-muted">No accepted quotes in this period.</p>` : `
+        <table class="report-table">
+          <thead><tr><th>Advisor</th><th>Quotes</th><th>Revenue</th></tr></thead>
+          <tbody>
+            ${advisorRows.map(([name, data]) => `
+              <tr>
+                <td style="font-weight:500;">${name}</td>
+                <td>${data.count}</td>
+                <td style="font-weight:600;color:var(--primary);">$${data.total.toFixed(2)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`}
+    </div>
+
+    <div class="card">
+      <div class="card-title">All Accepted Quotes</div>
+      ${filtered.length === 0 ? `<p class="text-sm text-muted">None in this period.</p>` : `
+        <table class="report-table" style="font-size:12px;">
+          <thead><tr><th>Customer</th><th>Advisor</th><th>RO</th><th>Total</th></tr></thead>
+          <tbody>
+            ${[...filtered].sort((a,b)=>b.acceptedAt-a.acceptedAt).map(q => `
+              <tr onclick="openQuote('${q.id}','reports')" style="cursor:pointer;">
+                <td>${q.customerName}</td>
+                <td>${q.advisorName}</td>
+                <td>${q.roNumber || '—'}</td>
+                <td style="font-weight:600;">$${q.total.toFixed(2)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`}
+    </div>
+  `;
+}
+
+function exportCSV() {
+  const days = parseInt(state.reportFilter);
+  const cutoff = Date.now() - days * 86400000;
+  const data = state.quotes.filter(q => q.createdAt >= cutoff && (q.status === 'accepted' || q.status === 'completed'));
+  const header = 'Date,Customer,Vehicle,Advisor,RO Number,Total,Items\n';
+  const rows = data.map(q =>
+    `${formatDate(q.createdAt)},"${q.customerName}","${q.vehicle}","${q.advisorName}","${q.roNumber}","$${q.total.toFixed(2)}","${q.lineItems.map(i=>i.name).join('; ')}"`
+  ).join('\n');
+  const blob = new Blob([header+rows], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `pdr-report-${days}days.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function renderAdmin() {
+  return `
+    <div class="card">
+      <div class="card-title">User Management</div>
+      ${state.users.map(u => `
+        <div class="detail-row">
+          <span class="detail-label">${u.name}</span>
+          <span class="detail-value">
+            <span class="badge ${u.role==='admin'?'badge-accepted':u.role==='tech'?'badge-approved':'badge-pending'}">${capitalize(u.role)}</span>
+          </span>
+        </div>`).join('')}
+      <button class="btn btn-outline btn-full mt-12" onclick="showAddUser()">+ Add User</button>
+    </div>
+
+    <div id="add-user-form" class="card hidden">
+      <div class="card-title">New User</div>
+      <div class="field"><label>Full Name</label><input type="text" id="new-name"/></div>
+      <div class="field"><label>Username</label><input type="text" id="new-username" autocapitalize="none"/></div>
+      <div class="field"><label>Password</label><input type="password" id="new-pass"/></div>
+      <div class="field"><label>Role</label>
+        <select id="new-role">
+          <option value="advisor">Advisor</option>
+          <option value="tech">Tech</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-primary flex-1" onclick="createUser()">Create</button>
+        <button class="btn btn-secondary flex-1" onclick="document.getElementById('add-user-form').classList.add('hidden')">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">PDR Matrix Pricing</div>
+      <p class="text-sm text-muted">Current pricing matrix (editable in future update):</p>
+      <table class="matrix-table" style="margin-top:10px;">
+        <thead><tr><th>Size</th>${PDR_SEVERITY.map(s=>`<th>${s}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${PDR_SIZES.map((s,si)=>`<tr><td>${s}</td>${PDR_MATRIX[si].map(p=>`<td>$${p}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Data Storage</div>
+      <p class="text-sm text-muted" style="margin-bottom:12px;">Currently using local browser storage. To enable cloud sync across devices, configure Supabase.</p>
+      <button class="btn btn-outline btn-full" onclick="navigate('setup')">Configure Cloud Sync</button>
+    </div>
+  `;
+}
+
+function showAddUser() {
+  document.getElementById('add-user-form').classList.toggle('hidden');
+}
+
+function createUser() {
+  const name = document.getElementById('new-name').value.trim();
+  const username = document.getElementById('new-username').value.trim().toLowerCase();
+  const pass = document.getElementById('new-pass').value;
+  const role = document.getElementById('new-role').value;
+  if (!name || !username || !pass) { showToast('Fill all fields.', 'error'); return; }
+  if (state.users.find(u => u.username === username)) { showToast('Username taken.', 'error'); return; }
+  state.users.push({ id: genId(), username, password: pass, name, role });
+  saveState();
+  showToast('User created!');
+  render();
+}
+
+// ============================================================
+// SETUP SCREEN
+// ============================================================
+function renderSetup() {
+  return `
+    <div class="setup-screen">
+      <h2>Cloud Sync Setup</h2>
+      <p>Connect to Supabase for multi-device sync. Free tier is sufficient — no credit card required.</p>
+      
+      <div class="setup-step">
+        <div class="setup-step-num">1</div>
+        <h3>Create a Supabase account</h3>
+        <p>Go to <strong>supabase.com</strong> → New Project → choose a name and region.</p>
+      </div>
+      
+      <div class="setup-step">
+        <div class="setup-step-num">2</div>
+        <h3>Run the SQL setup</h3>
+        <p>In your Supabase project, go to SQL Editor and run the schema file included with this app (<code>supabase-schema.sql</code>).</p>
+      </div>
+      
+      <div class="setup-step">
+        <div class="setup-step-num">3</div>
+        <h3>Paste your credentials</h3>
+        <div class="field"><label>Project URL</label>
+          <input type="text" id="sb-url-input" placeholder="https://xxxx.supabase.co" value="${localStorage.getItem('sb_url')||''}"/>
+        </div>
+        <div class="field"><label>Anon Public Key</label>
+          <input type="text" id="sb-key-input" placeholder="eyJhbGci..." value="${localStorage.getItem('sb_key')||''}"/>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="saveSBConfig()">Save & Enable Cloud Sync</button>
+      </div>
+
+      <button class="btn btn-secondary btn-full mt-12" onclick="navigate('admin')">← Back to Admin</button>
+    </div>`;
+}
+
+function saveSBConfig() {
+  const url = document.getElementById('sb-url-input').value.trim();
+  const key = document.getElementById('sb-key-input').value.trim();
+  if (!url || !key) { showToast('Enter both URL and key.', 'error'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  showToast('Supabase config saved! Reload the app.');
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function bindEvents() {
+  const loginPass = document.getElementById('login-pass');
+  if (loginPass) loginPass.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+}
+
+// ICONS
+function iconDoc(size=22) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`; }
+function iconPlus(size=22) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`; }
+function iconWrench(size=22) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>`; }
+function iconChart(size=22) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`; }
+function iconSettings(size=22) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`; }
+function iconDent() { return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="10" ry="6"/><path d="M12 6c-2 2-2 8 0 12"/></svg>`; }
+function iconRim() { return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/><line x1="2" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="22" y2="12"/></svg>`; }
+function iconBumper() { return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="8" width="20" height="8" rx="3"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="18" y1="8" x2="18" y2="16"/></svg>`; }
+function iconOther() { return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>`; }
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+</script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
